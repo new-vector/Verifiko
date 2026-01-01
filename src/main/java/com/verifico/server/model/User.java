@@ -14,13 +14,16 @@ public class User {
   private Long id;
   private String username;
   private String email;
+  private String password;
+  private String role;
 
   // creating constructor
-  public User() {};
-  
-  public User(String username, String email){
+  public User() {
+  };
+
+  public User(String username, String email) {
     this.username = username;
-    this.email=email;
+    this.email = email;
   }
 
   public User(Long id, String username, String email) {
@@ -52,5 +55,21 @@ public class User {
 
   public void setEmail(String email) {
     this.email = email;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setRole(String role) {
+    this.role = role;
+  }
+
+  public String getRole() {
+    return role;
   }
 }
