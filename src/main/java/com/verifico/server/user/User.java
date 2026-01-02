@@ -8,11 +8,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "users")
-@Data // does our getters, setters
+@Getter
+@Setter
+@NoArgsConstructor
+
 public class User {
 
   @Id
@@ -40,7 +45,7 @@ public class User {
   @Column(name = "avatar_url")
   private String avatarUrl;
 
-  @Column(name = "joined_date", nullable = false)
-  private LocalDate joinedDate;
+  @Column(name = "joined_date", nullable = false, updatable = false)
+  private LocalDate joinedDate = LocalDate.now();
 
 }
