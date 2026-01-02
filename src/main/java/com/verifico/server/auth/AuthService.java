@@ -1,5 +1,6 @@
 package com.verifico.server.auth;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,7 @@ import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
 import com.verifico.server.user.dto.UserResponse;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -43,7 +44,12 @@ public class AuthService {
     user.setAvatarUrl(request.getAvatarUrl());
     user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-    User savedUser = userRepository.save(user);
+    User savedUser;
+    try {
+      savedUser = userRepository.save(user);
+    } catch (DataIntegrityViolationException exception) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Username or email already in use");
+    }
 
     return new UserResponse(savedUser.getId(), savedUser.getUsername(), savedUser.getEmail(), savedUser.getFirstName(),
         savedUser.getLastName(), savedUser.getBio(), savedUser.getAvatarUrl(), savedUser.getJoinedDate());
