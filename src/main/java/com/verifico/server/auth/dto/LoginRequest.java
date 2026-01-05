@@ -1,11 +1,16 @@
+package com.verifico.server.auth.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
 @NoArgsConstructor
 public class LoginRequest {
 
-  @Size(min = 3, max = 16, message = "Username must be 3–16 characters")
   private String username;
 
   @Email(message = "Email must be valid")

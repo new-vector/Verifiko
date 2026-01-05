@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.verifico.server.auth.dto.LoginRequest;
+import com.verifico.server.auth.dto.LoginResponse;
 import com.verifico.server.auth.dto.RegisterRequest;
 import com.verifico.server.user.dto.UserResponse;
 
@@ -26,7 +28,7 @@ public class AuthController {
   };
 
   @PostMapping("/login")
-  public void login(){
-    return 
+  public LoginResponse login(@Valid @RequestBody LoginRequest request){
+    return authService.login(request);
   }
 }
