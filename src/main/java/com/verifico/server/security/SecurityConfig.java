@@ -1,5 +1,6 @@
 package com.verifico.server.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,6 +15,9 @@ import com.verifico.server.auth.JWT.JWTAuthFilter;
 @Configuration
 public class SecurityConfig {
 
+  @Value("${SPRING_ACTIVE_PROFILE}")
+  private String activeProfile;
+
   private final JWTAuthFilter jwtAuthFilter;
 
   public SecurityConfig(JWTAuthFilter jwtAuthFilter) {
@@ -22,13 +26,20 @@ public class SecurityConfig {
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    if ("dev".equals(activeProfile)) {
+      http.csrf(csrf -> csrf.disable());
+    } else {
+      http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+          .ignoringRequestMatchers("/api/auth/**"));
+    }
+    ;
+    // we need to make sure we're getting our XSRF token in the frontend with like
+    // axios and also setting is as header for our post, delete, put,patch etc.
+    // methods
     http
-        .csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-            .ignoringRequestMatchers("/api/auth/**"))
-        // we need to make sure we're getting our XSRF token in the frontend with like
-        // axios and also setting is as header for our post, delete, put,patch etc.
-        // methods
         .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+        .anonymous(anonymous -> anonymous.disable()) // disabling any anonymous auth spring seucirty sets before jwt
+                                                     // filter runs
         .authorizeHttpRequests(
             (requests) -> requests
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout")
