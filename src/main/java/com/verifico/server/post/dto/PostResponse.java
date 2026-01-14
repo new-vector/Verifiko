@@ -6,11 +6,11 @@ import java.util.List;
 
 import com.verifico.server.post.Category;
 import com.verifico.server.post.Stage;
-import com.verifico.server.user.User;
+import com.verifico.server.user.dto.AuthorResponse;
 
 public record PostResponse(
   Long id,
-  User author,
+  AuthorResponse author,
   String title,
   String tagline,
   Category category,

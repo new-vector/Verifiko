@@ -1,6 +1,8 @@
 package com.verifico.server.post;
 
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,19 +12,17 @@ import org.springframework.web.server.ResponseStatusException;
 import com.verifico.server.post.dto.PostResponse;
 import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
+import com.verifico.server.user.dto.AuthorResponse;
 import com.verifico.server.post.dto.PostRequest;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class PostService {
   private final UserRepository userRepository;
   private final PostRepository postRepository;
-
-  public PostService(UserRepository userRepository, PostRepository postRepository) {
-    this.userRepository = userRepository;
-    this.postRepository = postRepository;
-  }
 
   @Transactional
   public PostResponse createPost(PostRequest request) {
@@ -54,30 +54,28 @@ public class PostService {
     // increment it here whenever user makes a post
     userRepository.save(author);
 
-    return new PostResponse(
-        savedPost.getId(),
-        savedPost.getAuthor(),
-        savedPost.getTitle(),
-        savedPost.getTagline(),
-        savedPost.getCategory(),
-        savedPost.getStage(),
-        savedPost.getProblemDescription(),
-        savedPost.getSolutionDescription(),
-        savedPost.getScreenshotUrls(),
-        savedPost.getLiveDemoUrl(),
-        savedPost.isBoosted(),
-        savedPost.getBoostedUntil(),
-        savedPost.getCreatedAt(),
-        savedPost.getUpdatedAt());
+    return toPostResponse(savedPost);
   }
 
   public PostResponse getPostById(Long id) {
     Post post = postRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
+    return toPostResponse(post);
+
+  }
+
+  public Page<PostResponse> getAllPosts(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+
+    return postRepository.findAllByOrderByCreatedAtDesc(pageable).map(this::toPostResponse);
+
+  }
+
+  private PostResponse toPostResponse(Post post) {
     return new PostResponse(
         post.getId(),
-        post.getAuthor(),
+        toAuthorResponse(post.getAuthor()),
         post.getTitle(),
         post.getTagline(),
         post.getCategory(),
@@ -90,6 +88,10 @@ public class PostService {
         post.getBoostedUntil(),
         post.getCreatedAt(),
         post.getUpdatedAt());
+  }
 
+  private AuthorResponse toAuthorResponse(User user) {
+    return new AuthorResponse(user.getId(), user.getUsername(), user.getFirstName(), user.getLastName(),
+        user.getAvatarUrl());
   }
 }
