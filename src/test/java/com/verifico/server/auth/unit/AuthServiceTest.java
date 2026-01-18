@@ -1,4 +1,4 @@
-package com.verifico.server.auth;
+package com.verifico.server.auth.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,7 +19,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.verifico.server.auth.AuthService;
+import com.verifico.server.auth.JWT.JWTService;
+import com.verifico.server.auth.dto.LoginRequest;
 import com.verifico.server.auth.dto.RegisterRequest;
+import com.verifico.server.auth.token.RefreshToken;
+import com.verifico.server.auth.token.RefreshTokenService;
 import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
 import com.verifico.server.user.dto.UserResponse;
@@ -30,9 +35,12 @@ public class AuthServiceTest {
 
   @Mock
   UserRepository userRepository;
-
   @Mock
   BCryptPasswordEncoder passwordEncoder;
+  @Mock
+  JWTService jwtService;
+  @Mock
+  RefreshTokenService refreshTokenService;
 
   @InjectMocks
   AuthService authService;
@@ -137,5 +145,139 @@ public class AuthServiceTest {
     authService.register(registerRequest);
 
     verify(passwordEncoder).encode("password123");
+  }
+
+  // tests for login endpoint: (check missing input, happy path, check invalid
+  // credentials)
+  // to be more specific:
+  // 1. Neither username nor email provided
+  // 2. Both username AND email provided
+  // 3. User not found
+  // 4. Password mismatch
+  // 5. Valid username + password
+  // 6. Valid email + password
+
+  private LoginRequest loginWithUsername(String username, String password) {
+    LoginRequest req = new LoginRequest();
+    req.setUsername(username);
+    req.setPassword(password);
+    return req;
+  }
+
+  private LoginRequest loginWithEmail(String email, String password) {
+    LoginRequest req = new LoginRequest();
+    req.setEmail(email);
+    req.setPassword(password);
+    return req;
+  }
+
+  private User mockUser() {
+    User user = new User();
+    user.setId(1L);
+    user.setUsername("JohnDoe123");
+    user.setEmail("johndoe2@gmail.com");
+    user.setPassword("hashedPass");
+    return user;
+  }
+
+  @Test
+  void loginFailsWhenUsernameAndEmailMissing() {
+    LoginRequest request = new LoginRequest();
+    request.setPassword("password123");
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> authService.login(request));
+    assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    assertEquals("Username or email is required", ex.getReason());
+  }
+
+  @Test
+  void loginFailsWhenBothUsernameAndEmailProvided() {
+    LoginRequest req = new LoginRequest();
+    req.setUsername("JohnDoe123");
+    req.setEmail("johndoe2@gmail.com");
+    req.setPassword("password123");
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> authService.login(req));
+
+    assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    assertEquals("Provide either username or email, not both", ex.getReason());
+  }
+
+  @Test
+  void userNotFoundOnLogin() {
+    LoginRequest req = loginWithUsername("GIGGANIGGA", "password123");
+
+    when(userRepository.findByUsername("GIGGANIGGA")).thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> authService.login(req));
+
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    assertEquals("Invalid credentials", ex.getReason());
+  }
+
+  @Test
+  void invalidPasswordOnLogin() {
+    User user = mockUser();
+    LoginRequest req = loginWithUsername("JohnDoe123", "wronggggpassword");
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("wronggggpassword", "hashedPass")).thenReturn(false);
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> authService.login(req));
+
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    assertEquals("Invalid credentials", ex.getReason());
+  }
+
+  @Test
+  void successfullLoginWithUsername() {
+    User user = mockUser();
+    LoginRequest req = loginWithUsername("JohnDoe123", "password123");
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("password123", "hashedPass")).thenReturn(true);
+    when(jwtService.generateAccessToken(1L, "JohnDoe123")).thenReturn("access-token");
+
+    RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setToken("refresh-token");
+    refreshToken.setUser(user);
+
+    when(refreshTokenService.createToken(user)).thenReturn(refreshToken);
+
+    var response = authService.login(req);
+    assertNotNull(response);
+    assertEquals("JohnDoe123", response.getUsername());
+    assertEquals("access-token", response.getAccessToken());
+    assertEquals("refresh-token", response.getRefreshToken());
+
+    verify(passwordEncoder).matches("password123", "hashedPass");
+    verify(jwtService).generateAccessToken(1L, "JohnDoe123");
+    verify(refreshTokenService).createToken(user);
+  }
+
+  @Test
+  void successfullLoginWithEmail() {
+    User user = mockUser();
+    LoginRequest req = loginWithEmail("johndoe2@gmail.com", "password123");
+
+    when(userRepository.findByEmail("johndoe2@gmail.com")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("password123", "hashedPass")).thenReturn(true);
+    when(jwtService.generateAccessToken(1L, "JohnDoe123")).thenReturn("access-token");
+
+    RefreshToken refreshToken = new RefreshToken();
+    refreshToken.setToken("refresh-token");
+    refreshToken.setUser(user);
+
+    when(refreshTokenService.createToken(user)).thenReturn(refreshToken);
+
+    var response = authService.login(req);
+    assertNotNull(response);
+    assertEquals("JohnDoe123", response.getUsername());
+    assertEquals("access-token", response.getAccessToken());
+    assertEquals("refresh-token", response.getRefreshToken());
+
+    verify(passwordEncoder).matches("password123", "hashedPass");
+    verify(jwtService).generateAccessToken(1L, "JohnDoe123");
+    verify(refreshTokenService).createToken(user);
   }
 }
