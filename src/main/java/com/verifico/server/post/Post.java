@@ -38,7 +38,7 @@ import lombok.Setter;
     // index to browser by category with latest first:
     @Index(name = "idx_category_created", columnList = "category,createdAt"),
     // show user's post for user profile pages:
-    @Index(name = "idx_user_created", columnList = "author,createdAt")
+    @Index(name = "idx_user_created", columnList = "user_id,createdAt")
 })
 @Getter
 @Setter
