@@ -1,30 +1,47 @@
 package com.verifico.server.comment;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.verifico.server.comment.dto.CommentRequest;
+import com.verifico.server.comment.dto.CommentResponse;
+import com.verifico.server.common.dto.APIResponse;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class CommentController {
 
-  @PostMapping("/create/{id}")
-  public void createComment(@PathVariable("id") Long id, CommentRequest request) {
+  private final CommentService commentService;
 
+  @PostMapping("/posts/{id}/comments")
+  public ResponseEntity<APIResponse<CommentResponse>> createComment(@Valid @RequestBody CommentRequest request,
+      @PathVariable("id") Long id) {
+    CommentResponse response = commentService.postComment(request, id);
+
+    return ResponseEntity.status(HttpStatus.CREATED.value())
+        .body(new APIResponse<>("Comment Successfully Posted!", response));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/posts/{id}/comments")
   public void fetchAllCommentsForPost(@PathVariable("id") Long id) {
 
   }
 
-  @DeleteMapping("/{id}")
-  public void deleteComment(@PathVariable("id") Long id) {
+  @DeleteMapping("/comments/{id}")
+  public ResponseEntity<Void> deleteComment(@PathVariable("id") Long id) {
+    commentService.deleteMyComment(id);
 
+    return ResponseEntity.noContent().build();
   }
 }
