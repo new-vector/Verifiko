@@ -1,17 +1,41 @@
 package com.verifico.server.comment.unit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.verifico.server.comment.Comment;
 import com.verifico.server.comment.CommentRepository;
 import com.verifico.server.comment.CommentService;
 import com.verifico.server.comment.dto.CommentRequest;
+import com.verifico.server.comment.dto.CommentResponse;
+import com.verifico.server.post.Category;
+import com.verifico.server.post.Post;
 import com.verifico.server.post.PostRepository;
+import com.verifico.server.post.Stage;
+import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +51,9 @@ public class CommentServiceTest {
 
   @Mock
   SecurityContext securityContext;
+
+  @Mock
+  Authentication authentication;
 
   @InjectMocks
   CommentService commentService;
@@ -44,4 +71,106 @@ public class CommentServiceTest {
 
     return commentRequest;
   };
+
+  private User mockUser() {
+    User user = new User();
+    user.setId(1L);
+    user.setUsername("JohnDoe123");
+    user.setEmail("johndoe2@gmail.com");
+    user.setPassword("hashedPass");
+    return user;
+  }
+
+  private Post mockPost() {
+    Post post = new Post();
+    List<String> screenshots = new ArrayList<>(Arrays.asList("FIRST PIC", "SECOND PIC"));
+    post.setId(1L);
+    post.setAuthor(mockUser());
+    post.setTitle("Test Post");
+    post.setTagline("Test Tagline");
+    post.setCategory(Category.AI);
+    post.setStage(Stage.DEVELOPMENT);
+    post.setProblemDescription("Test problem");
+    post.setSolutionDescription("Test solution");
+    post.setScreenshotUrls(screenshots);
+    post.setLiveDemoUrl("FIND HERE ON WWW.GOOGLE.COM");
+    post.setCreatedAt(Instant.now());
+    post.setUpdatedAt(Instant.now());
+    return post;
+  }
+
+  private Comment mockComment(User author, Post post, String content) {
+    Comment comment = new Comment();
+    comment.setId(1L);
+    comment.setPost(post);
+    comment.setAuthor(author);
+    comment.setContent(content);
+    comment.setCreatedAt(Instant.now());
+    comment.setMarkedHelpful(false);
+    return comment;
+  }
+
+  // create comment (authenticated user JWT but not in db,post id not found,
+  // comment successfully made)
+  @Test
+  void userNotLoggedInDBTryingToComment() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    Post post = mockPost();
+
+    when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> commentService.postComment(validCommentRequest(), 1L));
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+    assertEquals("User data inconsistency detected", ex.getReason());
+  }
+
+  @Test
+  void postIdNotFoundWhenAddingComment() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+    when(postRepository.findById(4L)).thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> commentService.postComment(validCommentRequest(), 4L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    assertEquals("Post not found", ex.getReason());
+
+    verify(commentRepository, never()).save(any());
+  }
+
+  @Test
+  void commentSuccessfullyMade() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+    Post post = mockPost();
+    CommentRequest request = validCommentRequest();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(postRepository.findById(1L)).thenReturn(Optional.of(post));
+
+    Comment savedComment = mockComment(user, post, request.getContent());
+    when(commentRepository.save(any(Comment.class))).thenReturn(savedComment);
+
+    CommentResponse response = commentService.postComment(request, 1L);
+
+    assertNotNull(response);
+    assertEquals(1L, response.id());
+    assertEquals(request.getContent(), response.content());
+    assertEquals(user.getUsername(), response.author().getUsername());
+    assertEquals(post.getId(), response.postId());
+
+    verify(commentRepository).save(any(Comment.class));
+  }
+
+  // delete comment (unauthenticated user tries to delete comment, authenticated
+  // user tries to delete someone elses comment, comment id not
+  // found,successfully deleted comment )
 }
