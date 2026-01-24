@@ -173,4 +173,70 @@ public class CommentServiceTest {
   // delete comment (unauthenticated user tries to delete comment, authenticated
   // user tries to delete someone elses comment, comment id not
   // found,successfully deleted comment )
+
+  @Test
+  void unauthenticatedUserTriesToDeleteComment() {
+    when(securityContext.getAuthentication()).thenReturn(null);
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> commentService.deleteMyComment(1L));
+
+    verify(commentRepository, never()).findById(any());
+    verify(commentRepository, never()).delete(any());
+  }
+
+  @Test
+  void commentIdNotFoundWhenDeleting() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    when(commentRepository.findById(99L)).thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> commentService.deleteMyComment(99L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    assertEquals("Comment not found!", ex.getReason());
+    verify(commentRepository, never()).delete(any());
+  }
+
+  @Test
+  void authenticatedUserTriesToDeleteSomeoneElsesComment() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User commentAuthor = new User();
+    commentAuthor.setId(2L);
+    commentAuthor.setUsername("JaneSmith456");
+    commentAuthor.setEmail("janesmith@gmail.com");
+
+    Post post = mockPost();
+    Comment comment = mockComment(commentAuthor, post, "Someone else's comment");
+
+    when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> commentService.deleteMyComment(1L));
+
+    assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    assertEquals("You are not authorised to make changes to this comment!", ex.getReason());
+    verify(commentRepository, never()).delete(any());
+  }
+
+  @Test
+  void commentSuccessfullyDeleted() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+    Post post = mockPost();
+    Comment comment = mockComment(user, post, "This is my comment");
+
+    when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
+
+    commentService.deleteMyComment(1L);
+
+    verify(commentRepository).delete(comment);
+  }
+
 }
