@@ -57,6 +57,11 @@ public class CommentService {
   @Transactional
   public void deleteMyComment(Long id) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+    if (auth == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+    }
+    
     String username = auth.getName();
 
     // check if post exists

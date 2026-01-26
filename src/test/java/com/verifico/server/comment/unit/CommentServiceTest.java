@@ -181,6 +181,9 @@ public class CommentServiceTest {
     ResponseStatusException ex = assertThrows(ResponseStatusException.class,
         () -> commentService.deleteMyComment(1L));
 
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    assertEquals("User not authenticated", ex.getReason());
+
     verify(commentRepository, never()).findById(any());
     verify(commentRepository, never()).delete(any());
   }
