@@ -1,5 +1,7 @@
 package com.verifico.server.comment;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +36,11 @@ public class CommentController {
   }
 
   @GetMapping("/posts/{id}/comments")
-  public void fetchAllCommentsForPost(@PathVariable("id") Long id) {
+  public ResponseEntity<APIResponse<List<CommentResponse>>> fetchAllCommentsForPost(@PathVariable("id") Long id) {
+    List<CommentResponse> response = commentService.getAllCommentsForPost(id);
+
+    return ResponseEntity.ok()
+        .body(new APIResponse<>("All comments fecthed!", response));
 
   }
 

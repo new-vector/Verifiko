@@ -1,5 +1,7 @@
 package com.verifico.server.comment;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -49,9 +51,17 @@ public class CommentService {
     return toCommentResponse(savedComment);
   }
 
-  public void getAllCommentsForPost() {
-    // return a paginated response i.e only load 15 comments at a time.. then
-    // implement lazy loading in frontend
+  public List<CommentResponse> getAllCommentsForPost(Long id) {
+    // check post exists:
+    postRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+    // find all comments by post id {raw response}:
+    List<Comment> allComments = commentRepository.findAllByPostIdOrderByCreatedAtDesc(id);
+
+    return allComments.stream()
+        .map(this::toCommentResponse)
+        .toList();
   }
 
   @Transactional
@@ -61,7 +71,7 @@ public class CommentService {
     if (auth == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
     }
-    
+
     String username = auth.getName();
 
     // check if post exists
