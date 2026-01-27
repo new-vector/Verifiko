@@ -1,0 +1,42 @@
+name: SPRING BOOT CI PIPELINE 🍃
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: SPRING-BOOT BUILD 🍃
+    runs-on: ubuntu-latest
+
+    steps:
+      # checkout
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # setup java
+      - name: SETUP JAVA 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: maven
+
+      # build + test
+      - name: Build and test
+        run: mvn clean verify
+
+      # code quality
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+
+      # artifact
+      - name: Package application
+        run: mvn package -DskipTests
