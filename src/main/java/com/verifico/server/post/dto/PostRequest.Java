@@ -34,7 +34,7 @@ public class PostRequest {
 
   @NotBlank(message = "Problem description required")
   @Size(max = 2500, message = "Problem description must not exceed 2500 characters")
-  private String problemDescription;
+  private String problemDescription; 
 
   @NotBlank(message = "Solution description required")
   @Size(max = 2500, message = "Solution description must not exceed 2500 characters")
