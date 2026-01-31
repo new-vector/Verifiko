@@ -1,7 +1,12 @@
 package com.verifico.server.user.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -21,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
 import com.verifico.server.user.UserService;
+import com.verifico.server.user.dto.ProfileRequest;
 import com.verifico.server.user.dto.PublicUserResponse;
 import com.verifico.server.user.dto.UserResponse;
 
@@ -125,45 +131,225 @@ class UserServiceTest {
 
   // update profile endpoint tests:
   // 1. unauthenticated user
+  @Test
+  void unauthenticatedUserTryingToUpdateProfile() {
+    when(securityContext.getAuthentication()).thenReturn(null);
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.updateMyProfile(null));
+
+    assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+    assertEquals("Authenticated user not found!", ex.getReason());
+
+  }
 
   // 2. user not found in db
+  @Test
+  void userNotFoundInDBWhenUpdatingProfile() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> userService.updateMyProfile(null));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    assertEquals("User couldn't be found", ex.getReason());
+  }
 
   // 3. email already in use
+  @Test
+  void emailAlreadyInUseWhenUpdatingProfile() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.existsByEmail("newemail@gmail.com")).thenReturn(true);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setEmail("newemail@gmail.com");
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> userService.updateMyProfile(request));
+
+    assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    assertEquals("Email already in use", ex.getReason());
+
+    verify(userRepository, never()).save(any());
+  }
 
   // 4. username already in use
+  @Test
+  void usernameAlreadyInUseWhenUpdatingProfile() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.existsByUsername("NewUsername")).thenReturn(true);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setUsername("NewUsername");
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> userService.updateMyProfile(request));
+
+    assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    assertEquals("Username already in use", ex.getReason());
+
+    verify(userRepository, never()).save(any());
+  }
 
   // 5. avatar url not starting with https://
-  // long avatar url
+  @Test
+  void avatarUrlNotStartWithHttpsWhenUpdatingProfile() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
 
-  // 6. successfull partial update
+    User user = mockUser();
 
-  // 7. given email is same as current email (make sure this don't hit db)
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
 
-  // 8. given username is the same as current username (make sure this don't hit db)
+    ProfileRequest request = new ProfileRequest();
+    request.setAvatarUrl("GIGANIGGA");
 
-  // 9. Blank email→ no update to email, no uniqueness check (make sure this don't
-  // hit db)
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> userService.updateMyProfile(request));
 
-  // 10. blank username, no update to username, no uniqueness check (make sure this
-  // don't hit db)
+    assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    assertEquals("Avatar URL must be HTTPS", ex.getReason());
 
-  // 11. First name / last name blank → no update (make sure this
-  // don't hit db)
+    verify(userRepository, never()).save(any());
+  }
 
-  // 12. Bio provided as blank or only whitespace → bio is set to ""
+  // 6. long avatar url
+  @Test
+  void avatarUrlTooLongWhenUpdatingProfile() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
 
-  // 13. Bio provided with value (including leading/trailing spaces) → bio is trimmed
-  // and updated
+    User user = mockUser();
 
-  // 14. Multiple fields updated successfully in one request (e.g. firstName + bio +
-  // avatarUrl)
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
 
-  // 15. No fields provided at all (all null or blank) → no changes, but save is still
-  // called (no-op update)
+    ProfileRequest request = new ProfileRequest();
+    String longurl = "https://" + "a".repeat(2050);
+    request.setAvatarUrl(longurl);
 
-  // 16. Email provided with leading/trailing spaces → email is trimmed and lowercased
-  // correctly
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        () -> userService.updateMyProfile(request));
 
-  // 17. Username provided with leading/trailing spaces → username is trimmed but case
-  // preserved
+    assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    assertEquals("Avatar URL too long", ex.getReason());
+    verify(userRepository, never()).save(any());
+  }
+
+  // 7. successfull partial update
+  @Test
+  void successfullPartialUpdate() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.save(any())).thenReturn(user);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setFirstName("Jonnhy");
+    request.setEmail("jonnhydoe2@gmail.com");
+
+    UserResponse response = userService.updateMyProfile(request);
+
+    assertNotNull(response);
+    assertEquals("jonnhydoe2@gmail.com", response.email());
+    assertEquals("Jonnhy", response.firstName());
+
+    verify(userRepository, times(1)).save(any());
+  }
+
+  // 8. given email is same as current email (make sure this don't hit db)
+  @Test
+  void updatedEmailSameAsCurrentEmail() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.save(any())).thenReturn(user);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setEmail("johndoe2@gmail.com");
+
+    userService.updateMyProfile(request);
+
+    verify(userRepository, never()).existsByEmail(any());
+    verify(userRepository, times(1)).save(any());
+  }
+
+  // 9. given username is the same as current username (make sure this don't hit
+  // db)
+  @Test
+  void updatedUsernameSameAsCurrentUsername() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.save(any())).thenReturn(user);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setUsername("JohnDoe123");
+
+    userService.updateMyProfile(request);
+
+    verify(userRepository, never()).existsByUsername(any());
+    verify(userRepository, times(1)).save(any());
+  }
+
+  // 10. bio blank space/white space -> set to null
+  @Test
+  void bioBlankSpace() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.save(any())).thenReturn(user);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setBio("      ");
+
+    UserResponse response = userService.updateMyProfile(request);
+
+    assertEquals(null, response.bio());
+
+    verify(userRepository, times(1)).save(any());
+  }
+
+  // 11. Email trimmed and lowercased, username trimmed - Data sanitisation
+  @Test
+  void userNameAndEmailTrimmedAndEmailLowercased() {
+    when(securityContext.getAuthentication()).thenReturn(authentication);
+    when(authentication.getName()).thenReturn("JohnDoe123");
+
+    User user = mockUser();
+    when(userRepository.findByUsername("JohnDoe123")).thenReturn(Optional.of(user));
+    when(userRepository.save(any())).thenReturn(user);
+
+    ProfileRequest request = new ProfileRequest();
+    request.setEmail("  JOHHNNDOEEE22@GMAIL.COM  ");
+    request.setUsername("  jooohnDoe23  ");
+
+    UserResponse response = userService.updateMyProfile(request);
+
+    assertNotNull(response);
+    assertEquals("johhnndoeee22@gmail.com", response.email());
+    assertEquals("jooohnDoe23", response.username());
+
+    verify(userRepository, times(1)).save(any());
+  }
+
 }

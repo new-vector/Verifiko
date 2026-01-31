@@ -46,14 +46,14 @@ public class UserService {
   @Transactional
   public UserResponse updateMyProfile(ProfileRequest request) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    if (auth == null || !auth.isAuthenticated()) {
+    if (auth == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found!");
     }
     String username = auth.getName();
 
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-            "User couldn't be found "));
+            "User couldn't be found"));
 
     // update fields if entered
     if (request.getEmail() != null && !request.getEmail().equals(user.getEmail()) && !request.getEmail().isBlank()) {
@@ -67,7 +67,7 @@ public class UserService {
       if (userRepository.existsByUsername(request.getUsername())) {
         throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already in use");
       }
-      user.setUsername(request.getUsername());
+      user.setUsername(request.getUsername().trim());
     }
     if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
       user.setFirstName(request.getFirstName().trim());
