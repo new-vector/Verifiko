@@ -1,0 +1,30 @@
+# maven stuff
+target/
+!target/*.jar
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# ci/cd
+.github/
+*.yml
+*.yaml
+
+# docs
+docs/
+*.md
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# Docs
+*.md
+
+# Environment
+.env
+.env.example
+
