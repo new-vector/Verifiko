@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -54,6 +55,9 @@ public class User {
 
   @Column(nullable = false)
   private int credits = 0;
+
+  @Version
+  private Long version;
 
   @Column(name = "joined_date", nullable = false, updatable = false)
   private LocalDate joinedDate = LocalDate.now();
