@@ -11,6 +11,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.verifico.server.comment.dto.CommentRequest;
 import com.verifico.server.comment.dto.CommentResponse;
+import com.verifico.server.credit.CreditService;
+import com.verifico.server.credit.TransactionType;
 import com.verifico.server.post.Post;
 import com.verifico.server.post.PostRepository;
 import com.verifico.server.user.User;
@@ -29,10 +31,14 @@ public class CommentService {
   private final CommentRepository commentRepository;
   private final UserRepository userRepository;
   private final PostRepository postRepository;
+  private final CreditService creditService;
 
   @Transactional
   public CommentResponse postComment(CommentRequest request, Long id) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found!");
+    }
     String username = auth.getName();
 
     // check post exists
@@ -86,6 +92,38 @@ public class CommentService {
 
     // delete comment
     commentRepository.delete(comment);
+  }
+
+  @Transactional
+  public void markCommentHelpful(Long commentId) {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+    if (auth == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+    }
+
+    String username = auth.getName();
+
+    Comment comment = commentRepository.findById(commentId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+
+    Post post = comment.getPost();
+
+    if (!username.equals(post.getAuthor().getUsername())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only post author can mark comments as helpful");
+    }
+
+    User commentAuthor = comment.getAuthor();
+
+    if (comment.isMarkedHelpful()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Comment already marked helpful");
+    }
+
+    creditService.addCredits(commentAuthor.getId(), TransactionType.COMMENT_MARKED_HELPFUL, commentId, post.getId());
+
+    comment.setMarkedHelpful(true);
+    commentRepository.save(comment);
+
   }
 
   private CommentResponse toCommentResponse(Comment comment) {

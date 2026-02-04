@@ -20,6 +20,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,7 +28,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "credit_transactions", indexes = {
     @Index(name = "idx_user_created", columnList = "user_id,createdAt")
-})
+}, uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "transaction_type", "related_comment_id" }))
 @Getter
 @Setter
 @NoArgsConstructor

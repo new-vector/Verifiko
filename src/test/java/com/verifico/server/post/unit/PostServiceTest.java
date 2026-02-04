@@ -30,6 +30,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.verifico.server.credit.CreditService;
 import com.verifico.server.post.Category;
 import com.verifico.server.post.Post;
 import com.verifico.server.post.PostRepository;
@@ -60,6 +61,9 @@ public class PostServiceTest {
 
   @Mock
   Authentication authentication;
+
+  @Mock
+  CreditService creditService;
 
   @InjectMocks
   PostService postService;
