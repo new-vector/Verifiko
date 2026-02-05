@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: verifiko
+  labels:
+    app: verifiko
+spec:
+  replicas: 3 #add 3 for main server, for dev only like 1
+  selector:
+  matchLabels:
+    app: verifiko
+  template:
+    metadata:
+      labels:
+        app: verifiko
+    spec:
+      automountServiceAccountToken: false #Look more into this before spinning up cluster
+      containers:
+        - name: verifiko-container
+          image: ashutoshkuinkel/verifiko:latest #Cant be using latest during actual prod.. only during like dev
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+              ephemeral-storage: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+              ephemeral-storage: "2Gi"
