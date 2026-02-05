@@ -1,5 +1,7 @@
 FROM eclipse-temurin:17-jdk-alpine
 
+RUN apk update && apk upgrade
+
 ARG JAR_FILE=target/*.jar
 
 COPY ${JAR_FILE} app.jar
