@@ -1,6 +1,7 @@
 package com.verifico.server.payment;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -59,7 +60,33 @@ public class PaymentService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantity must be 1");
     }
 
-    // check cache for secret key/pi_id first:
+    Optional<Payment> existing = paymentRepository.findByIdempotencyKey(idempotencyKey);
+    if (existing.isPresent() && existing.get().getPaymentIntentId() != null) {
+      String paymentIntentId = existing.get().getPaymentIntentId();
+
+      String redisKey = "payment_idempotency:" + idempotencyKey;
+      String cachedValue = redisTemplate.opsForValue().get(redisKey);
+      if (cachedValue != null) {
+        String[] parts = cachedValue.split(",");
+        return new PaymentIntentResponse(parts[0], parts[1]);
+      }
+
+      // If not in Redis, retrieve from Stripe
+      RequestOptions retrieveOptions = RequestOptions.builder()
+          .setApiKey(stripeKey)
+          .build();
+      PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId, retrieveOptions); // ← FIXED
+
+      // Re-cache it
+      String valueToCache = intent.getClientSecret() + "," + intent.getId();
+      redisTemplate.opsForValue().set(redisKey, valueToCache, Duration.ofMinutes(15));
+
+      return new PaymentIntentResponse(
+          intent.getClientSecret(),
+          intent.getId());
+    }
+
+    // check cache for secret key/pi_id:
     String redisKey = "payment_idempotency:" + idempotencyKey;
     String cachedValue = redisTemplate.opsForValue().get(redisKey);
 
@@ -94,7 +121,7 @@ public class PaymentService {
     PaymentIntent paymentIntent = PaymentIntent.create(params, options);
 
     // make sure payment status is set to pending with payment intent id
-    toTransaction(paymentIntent.getId(), purchasedAmount, user, amountInCents);
+    toTransaction(idempotencyKey, paymentIntent.getId(), purchasedAmount, user, amountInCents);
 
     // set client secret key with ttl 15 mins in redis cache.
     String valueToCache = paymentIntent.getClientSecret() + "," + paymentIntent.getId();
@@ -117,9 +144,10 @@ public class PaymentService {
     };
   }
 
-  public Payment toTransaction(String paymentIntentId, CreditsPurchasedAmount purchasePackage,
+  public Payment toTransaction(String idempotencyKey, String paymentIntentId, CreditsPurchasedAmount purchasePackage,
       User transactionInitiator, Long amount) {
     Payment transaction = new Payment();
+    transaction.setIdempotencyKey(idempotencyKey);
     transaction.setPaymentIntentId(paymentIntentId);
     transaction.setPurchasedPackage(purchasePackage);
     transaction.setTransactionInitiator(transactionInitiator);

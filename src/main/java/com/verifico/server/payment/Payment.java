@@ -31,7 +31,8 @@ import lombok.Setter;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "payments", indexes = {
     @Index(name = "idx_usr_paymentId", columnList = "user_id,id"),
-    @Index(name = "idx_payment_intent", columnList = "paymentIntentId")
+    @Index(name = "idx_payment_intent", columnList = "paymentIntentId"),
+    @Index(name = "idx_idempotency_key", columnList = "idempotencyKey")
 })
 @Getter
 @Setter
@@ -45,13 +46,16 @@ public class Payment {
   @Column(nullable = false, unique = true, updatable = false)
   private String paymentIntentId;
 
+  @Column(unique = true, nullable = false)
+  private String idempotencyKey;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   @ColumnDefault("'PURCHASE_CREDITS'")
   private TransactionType type = TransactionType.PURCHASE_CREDITS;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false,name = "purchased_package")
+  @Column(nullable = false, name = "purchased_package")
   private CreditsPurchasedAmount purchasedPackage;
 
   @Column(nullable = false)
