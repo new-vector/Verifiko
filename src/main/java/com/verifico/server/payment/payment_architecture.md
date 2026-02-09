@@ -32,4 +32,11 @@ PENDING (initial state), then either:
 
 #### *For future reference we can consider anything that allows for credits being given outside the stripe webhook a security bug.*
 
+For @v2, evaluate refactoring toward a DB-first (database as source of truth)
+payment model similar to the reference below, if operational or audit
+requirements increase:
+https://medium.com/@bharathdayals/building-a-spring-boot-stripe-checkout-redis-idempotency-system-complete-guide-58f063dbb244
+
+
+
 
