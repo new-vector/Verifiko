@@ -122,6 +122,8 @@ public class PaymentService {
         .setAutomaticPaymentMethods(
             PaymentIntentCreateParams.AutomaticPaymentMethods.builder()
                 .setEnabled(true)
+                .setAllowRedirects(
+                    PaymentIntentCreateParams.AutomaticPaymentMethods.AllowRedirects.NEVER)
                 .build())
         .putMetadata("user_id", user.getId().toString())
         .putMetadata("purchase_type", purchasedAmount.name())
@@ -237,19 +239,15 @@ public class PaymentService {
   }
 
   @Transactional
-  public void handleFailedPayment(String paymentIntentId) {
-    Payment payment = paymentRepository.findByPaymentIntentId(paymentIntentId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment not found!"));
-
-    // check if already marked as failed:
-    if (payment.getStatus() == PaymentStatus.FAILED) {
-      return;
-    }
-
-    payment.setStatus(PaymentStatus.FAILED);
-    paymentRepository.save(payment);
-    // add logging here saying payment marked as failed w/payment id..
-    log.warn("Payment {} marked as failed", payment.getId());
+  private void handleFailedPayment(String paymentIntentId) {
+    paymentRepository.findByPaymentIntentId(paymentIntentId)
+        .ifPresentOrElse(payment -> {
+          if (payment.getStatus() != PaymentStatus.FAILED) {
+            payment.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+            log.warn("Payment {} marked as failed", payment.getId());
+          }
+        }, () -> log.warn("Payment with intent {} not found, ignoring", paymentIntentId));
   }
 
   // helpers:
