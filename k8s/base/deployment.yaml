@@ -7,17 +7,41 @@ metadata:
 spec:
   replicas: 3 #add 3 for main server, for dev only like 1
   selector:
-  matchLabels:
-    app: verifiko
+    matchLabels:
+      app: verifiko
   template:
     metadata:
       labels:
         app: verifiko
     spec:
       automountServiceAccountToken: false #Look more into this before spinning up cluster
+
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
       containers:
         - name: verifiko-container
           image: ashutoshkuinkel/verifiko:latest #Cant be using latest during actual prod.. only during like dev
+
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 3000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
           resources:
             requests:
               cpu: "250m"
