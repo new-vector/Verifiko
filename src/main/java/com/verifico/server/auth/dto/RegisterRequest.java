@@ -1,5 +1,7 @@
 package com.verifico.server.auth.dto;
 
+import com.verifico.server.auth.validation.ValidPassword;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -27,7 +29,7 @@ public class RegisterRequest {
   private String email;
 
   @NotBlank(message = "Password required")
-  @Size(min = 8, message = "Password must be at least 8 characters")
+  @ValidPassword
   private String password;
 
   @Size(max = 500, message = "Bio must not exceed 500 characters")
