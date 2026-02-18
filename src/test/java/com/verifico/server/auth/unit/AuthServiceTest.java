@@ -25,13 +25,14 @@ import com.verifico.server.auth.dto.LoginRequest;
 import com.verifico.server.auth.dto.RegisterRequest;
 import com.verifico.server.auth.token.RefreshToken;
 import com.verifico.server.auth.token.RefreshTokenService;
+import com.verifico.server.email.EmailService;
 import com.verifico.server.user.User;
 import com.verifico.server.user.UserRepository;
 import com.verifico.server.user.dto.UserResponse;
 
 // unit tests for auth endpoints(happy path,duplicates password hashing):
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+class AuthServiceTest {
 
   @Mock
   UserRepository userRepository;
@@ -41,6 +42,8 @@ public class AuthServiceTest {
   JWTService jwtService;
   @Mock
   RefreshTokenService refreshTokenService;
+  @Mock
+  EmailService emailService;
 
   @InjectMocks
   AuthService authService;
