@@ -44,6 +44,7 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.net.Webhook;
 import com.verifico.server.credit.CreditService;
+import com.verifico.server.email.EmailService;
 import com.verifico.server.payment.CreditsPurchasedAmount;
 import com.verifico.server.payment.Payment;
 import com.verifico.server.payment.PaymentRepository;
@@ -78,6 +79,9 @@ class PaymentServiceTest {
 
   @Mock
   Authentication authentication;
+
+  @Mock
+  EmailService emailService;
 
   @InjectMocks
   PaymentService paymentService;
