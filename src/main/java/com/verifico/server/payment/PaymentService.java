@@ -245,8 +245,10 @@ public class PaymentService {
     paymentRepository.save(payment);
     log.info("Payment {} marked as successful", payment.getId());
 
-    double price = payment.getAmountInCents() / 100.0; // centies to dollas conversion
-    emailService.sendCreditPurchaseReceiptForv1(payment.getTransactionInitiator(), credits, price);
+    if (payment.getAmountInCents() != null) {
+      double price = payment.getAmountInCents() / 100.0; // centies to dollas conversion
+      emailService.sendCreditPurchaseReceiptForv1(payment.getTransactionInitiator(), credits, price);
+    }
   }
 
   @Transactional
