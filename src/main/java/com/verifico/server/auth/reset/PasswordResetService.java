@@ -51,7 +51,7 @@ public class PasswordResetService {
     // cleanup prior tokens, avoids case of having 2 available reset links for one
     // user in the case
     // that one expired yet and user gets another link:
-    resetTokenRepository.deleteById(user.getId());
+    resetTokenRepository.deleteByUserId(user.getId());
 
     String token = makeResetToken();
 
