@@ -44,7 +44,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout",
                     "/api/v1/payments/webhook/stripe")
                 .permitAll()
-                .requestMatchers(HttpMethod.GET, "/", "/api/posts", "/api/posts/{id}/comments", "/api/users/{id}")
+                .requestMatchers(HttpMethod.GET, "/", "/api/posts", "/api/posts/{id}/comments", "/api/users/{id}",
+                    "/swagger-ui.html")
                 .permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/post/create", "/api/posts/{id}/comments",
                     "/api/v1/payments/payment-intent")

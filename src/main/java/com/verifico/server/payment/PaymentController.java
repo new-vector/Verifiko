@@ -13,6 +13,8 @@ import com.verifico.server.common.dto.APIResponse;
 import com.verifico.server.payment.dto.PaymentIntentResponse;
 import com.verifico.server.payment.dto.PurchaseCreditsRequest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/payments")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Payment API Endpoints", description = "Endpoints for handling Stripe payments and webhook events")
 public class PaymentController {
 
   private final PaymentService paymentService;
 
+  @Operation(summary = "Create a Stripe payment intent for purchasing credits")
   @PostMapping("/payment-intent")
   public ResponseEntity<APIResponse<PaymentIntentResponse>> createPaymentIntent(
       @Valid @RequestBody PurchaseCreditsRequest request,
@@ -36,6 +40,7 @@ public class PaymentController {
         .body(new APIResponse<>("Payment Intent Successfully Created", response));
   }
 
+  @Operation(summary = "Handle incoming Stripe webhook events")
   @PostMapping("/webhook/stripe")
   public ResponseEntity<String> handleStripeWebhook(@RequestBody String payload,
       @RequestHeader("Stripe-Signature") String sigHeader) {
