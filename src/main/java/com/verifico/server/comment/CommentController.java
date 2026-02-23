@@ -16,16 +16,20 @@ import com.verifico.server.comment.dto.CommentRequest;
 import com.verifico.server.comment.dto.CommentResponse;
 import com.verifico.server.common.dto.APIResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "Comment API Endpoints", description = "Endpoints for posting, fetching, deleting and interacting with comments on posts")
 public class CommentController {
 
   private final CommentService commentService;
 
+  @Operation(summary = "Post a comment on a post")
   @PostMapping("/posts/{id}/comments")
   public ResponseEntity<APIResponse<CommentResponse>> createComment(@Valid @RequestBody CommentRequest request,
       @PathVariable("id") Long id) {
@@ -35,6 +39,7 @@ public class CommentController {
         .body(new APIResponse<>("Comment Successfully Posted!", response));
   }
 
+  @Operation(summary = "Get all comments for a post with pagination")
   @GetMapping("/posts/{id}/comments")
   public ResponseEntity<APIResponse<Page<CommentResponse>>> fetchAllCommentsForPost(@PathVariable("id") Long id,
       @RequestParam(value = "page", defaultValue = "0") int page) {
@@ -52,6 +57,7 @@ public class CommentController {
 
   }
 
+  @Operation(summary = "Delete a comment by ID")
   @DeleteMapping("/comments/{id}")
   public ResponseEntity<Void> deleteComment(@PathVariable("id") Long id) {
     commentService.deleteMyComment(id);
@@ -59,6 +65,7 @@ public class CommentController {
     return ResponseEntity.noContent().build();
   }
 
+  @Operation(summary = "Mark a comment as helpful")
   @PostMapping("/comments/{id}/mark-helpful")
   public ResponseEntity<APIResponse<String>> markCommentHelpful(@PathVariable("id") Long id) {
 
