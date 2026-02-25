@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-alpine-3.23
+FROM eclipse-temurin:17-jdk-alpine
 
 RUN apk update && apk upgrade
 
