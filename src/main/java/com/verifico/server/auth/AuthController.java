@@ -35,7 +35,7 @@ public class AuthController {
         private int accessTokenMins;
         @Value("${REFRESH_TOKEN_DAYS}")
         private long RefreshTokenDays;
-        @Value("${SPRING_ACTIVE_PROFILE}")
+        @Value("${SPRING_PROFILES_ACTIVE}")
         private String activeProfile;
 
         public AuthController(AuthService authService) {
