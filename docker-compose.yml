@@ -28,9 +28,16 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_LOGIN: ${SMTP_LOGIN}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_KEY: ${SMTP_KEY}
+      SENDER_EMAIL: ${SENDER_EMAIL}
+      SENDER_NAME: ${SENDER_NAME}
 
     ports:
       - "8080:8080"
-      
+
 volumes:
   postgres_data:
