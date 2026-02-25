@@ -1,4 +1,4 @@
-package com.verifico.server.auth.JWT;
+package com.verifico.server.auth.jwt;
 
 import java.io.IOException;
 import java.util.Arrays;

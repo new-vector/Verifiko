@@ -10,7 +10,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
-import com.verifico.server.auth.JWT.JWTAuthFilter;
+import com.verifico.server.auth.jwt.JWTAuthFilter;
 
 @Configuration
 public class SecurityConfig {

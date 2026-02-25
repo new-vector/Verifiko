@@ -1,4 +1,4 @@
-package com.verifico.server.auth.JWT;
+package com.verifico.server.auth.jwt;
 
 import java.time.Instant;
 import java.util.Date;
@@ -36,7 +36,7 @@ public class JWTService {
         .subject(userId.toString())
         .claim("username", username)
         .issuedAt(new Date())
-        .expiration(Date.from(Instant.now().plusSeconds(accessTokenMins * 60)))
+        .expiration(Date.from(Instant.now().plusSeconds(accessTokenMins * 60L)))
         .signWith(getSigningKey())
         .compact();
   }

@@ -10,9 +10,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.verifico.server.auth.JWT.JWTService;
 import com.verifico.server.auth.dto.LoginRequest;
 import com.verifico.server.auth.dto.RegisterRequest;
+import com.verifico.server.auth.jwt.JWTService;
 import com.verifico.server.auth.token.RefreshToken;
 import com.verifico.server.auth.token.RefreshTokenService;
 import com.verifico.server.email.EmailService;
