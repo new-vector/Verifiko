@@ -17,15 +17,19 @@ import com.verifico.server.common.dto.APIResponse;
 import com.verifico.server.post.dto.PostRequest;
 import com.verifico.server.post.dto.PostResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
+@Tag(name = "Post API Endpoints", description = "Endpoints for creating, fetching, updating and deleting posts")
 public class PostController {
   private final PostService postService;
 
+  @Operation(summary = "Create a new post")
   @PostMapping("/create")
   public ResponseEntity<APIResponse<PostResponse>> createPost(@Valid @RequestBody PostRequest request) {
     PostResponse post = postService.createPost(request);
@@ -34,6 +38,7 @@ public class PostController {
         .body(new APIResponse<>("Post sucessfully created!", post));
   }
 
+  @Operation(summary = "Get post by ID")
   @GetMapping("/{id}")
   public ResponseEntity<APIResponse<PostResponse>> getPostById(@PathVariable("id") Long id) {
     PostResponse post = postService.getPostById(id);
@@ -48,6 +53,7 @@ public class PostController {
   // 10-15 posts at max at a time...
   // then in the frontned we can use lazyloading in the frontend, so more only
   // loads when user scrolls down..
+  @Operation(summary = "Get all posts with optional filtering and pagination")
   @GetMapping("")
   public ResponseEntity<APIResponse<Page<PostResponse>>> getAllPosts(
       @RequestParam(value = "page", defaultValue = "0") int page,
@@ -74,6 +80,7 @@ public class PostController {
         .body(new APIResponse<>("Successfully fetched all posts", posts));
   }
 
+  @Operation(summary = "Update post by ID")
   @PutMapping("/{id}")
   public ResponseEntity<APIResponse<PostResponse>> updatePost(@PathVariable("id") Long id,
       @Valid @RequestBody PostRequest request) {
@@ -84,6 +91,7 @@ public class PostController {
         .body(new APIResponse<>("Successfully updated posting", post));
   }
 
+  @Operation(summary = "Delete post by ID")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deletePost(@PathVariable("id") Long id) {
 

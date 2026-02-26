@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-push:
-    name: Build Image & Push to Docker Hub 👷‍♂️
+    name: Build Image & Push to Docker Hub
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,6 +69,7 @@ jobs:
           context: .
           file: Dockerfile
           load: true
+          no-cache: true
           tags: |
             ${{secrets.DOCKER_HUB_USERNAME}}/verifiko:latest
             ${{secrets.DOCKER_HUB_USERNAME}}/verifiko:${{steps.meta.outputs.SHORT_SHA}}

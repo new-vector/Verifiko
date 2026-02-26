@@ -10,12 +10,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
-import com.verifico.server.auth.JWT.JWTAuthFilter;
+import com.verifico.server.auth.jwt.JWTAuthFilter;
 
 @Configuration
 public class SecurityConfig {
 
-  @Value("${SPRING_ACTIVE_PROFILE}")
+  @Value("${SPRING_PROFILES_ACTIVE}")
   private String activeProfile;
 
   private final JWTAuthFilter jwtAuthFilter;
@@ -41,6 +41,7 @@ public class SecurityConfig {
                                                      // filter runs
         .authorizeHttpRequests(
             (requests) -> requests
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/logout",
                     "/api/v1/payments/webhook/stripe")
                 .permitAll()

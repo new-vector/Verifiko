@@ -46,7 +46,7 @@ import com.verifico.server.user.UserRepository;
 // the unit tests do not feature the missing input/validation checks
 // instead we will do those DTO/annotation validation (@NotNull, @Size, etc.) → Test in integration/controller tests.
 @ExtendWith(MockitoExtension.class)
-public class PostServiceTest {
+class PostServiceTest {
   @Mock
   PostRepository postRepository;
 
@@ -87,7 +87,7 @@ public class PostServiceTest {
     postRequest.setLiveDemoUrl("FIND HERE ON WWW.GOOGLE.COM");
 
     return postRequest;
-  };
+  }
 
   private User mockUser() {
     User user = new User();

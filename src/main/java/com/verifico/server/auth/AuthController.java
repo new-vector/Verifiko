@@ -19,12 +19,15 @@ import com.verifico.server.auth.dto.LoginResponse;
 import com.verifico.server.auth.dto.RegisterRequest;
 import com.verifico.server.user.dto.UserResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Central Auth API Endpoints", description = "core Auth API endpoints including register,login,logout etc..")
 public class AuthController {
 
         private final AuthService authService;
@@ -32,18 +35,20 @@ public class AuthController {
         private int accessTokenMins;
         @Value("${REFRESH_TOKEN_DAYS}")
         private long RefreshTokenDays;
-        @Value("${SPRING_ACTIVE_PROFILE}")
+        @Value("${SPRING_PROFILES_ACTIVE}")
         private String activeProfile;
 
         public AuthController(AuthService authService) {
                 this.authService = authService;
         }
 
+        @Operation(summary = "Register new user")
         @PostMapping("/register")
         public UserResponse register(@Valid @RequestBody RegisterRequest request) {
                 return authService.register(request);
         };
 
+        @Operation(summary = "User Login")
         @PostMapping("/login")
         public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
 
@@ -72,6 +77,7 @@ public class AuthController {
                                                 response.getUserId()));
         }
 
+        @Operation(summary = "Refresh Token endpoint")
         @PostMapping("/refresh")
         public ResponseEntity<AuthResponse> refresh(HttpServletRequest request) {
                 String refreshToken = Arrays.stream(request.getCookies())
@@ -108,6 +114,7 @@ public class AuthController {
                                                 response.getUserId()));
         }
 
+        @Operation(summary = "Logout user")
         @PostMapping("/logout")
         public ResponseEntity<AuthResponse> logout(HttpServletRequest request) {
 

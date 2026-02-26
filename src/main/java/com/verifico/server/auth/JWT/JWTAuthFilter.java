@@ -1,4 +1,4 @@
-package com.verifico.server.auth.JWT;
+package com.verifico.server.auth.jwt;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -61,7 +61,11 @@ public class JWTAuthFilter extends OncePerRequestFilter {
     // skipping auth & webhook endpoints of all JWT and immediately pass the request
     // to the next filter/controller:
     String path = request.getRequestURI();
-    if (path.startsWith("/api/auth") || path.equals("/api/v1/payments/webhook/stripe")) {
+    if (path.startsWith("/api/auth") || path.equals("/api/v1/payments/webhook/stripe")
+        || path.startsWith("/swagger-ui/") ||
+        path.startsWith("/v3/api-docs") ||
+        path.equals("/swagger-ui.html") ||
+        path.equals("/swagger-ui/index.html")) {
       filterChain.doFilter(request, response);
       return;
     }

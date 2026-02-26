@@ -16,6 +16,8 @@ import com.verifico.server.user.dto.PublicUserResponse;
 import com.verifico.server.user.dto.UpdatePasswordRequest;
 import com.verifico.server.user.dto.UserResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +32,12 @@ import lombok.RequiredArgsConstructor;
 // PUT /api/users/me
 // DELETE /api/users/me (maybe soft delete, if this is even included)
 // GET /api/users/userId
+@Tag(name = "User API Endpoints", description = "Endpoints for viewing and managing user profiles and account settings")
 public class UserController {
 
   private final UserService userService;
 
+  @Operation(summary = "Get current authenticated user profile")
   @GetMapping("/me")
   public ResponseEntity<APIResponse<UserResponse>> profile() {
     UserResponse response = userService.meEndpoint();
@@ -42,6 +46,7 @@ public class UserController {
         .body(new APIResponse<>("Successfully Fetched Profile", response));
   }
 
+  @Operation(summary = "Get public profile of a user by ID")
   @GetMapping("/{id}")
   public ResponseEntity<APIResponse<PublicUserResponse>> getUserProfile(@PathVariable @Positive Long id) {
     PublicUserResponse response = userService.viewSomebodiesProfile(id);
@@ -50,6 +55,7 @@ public class UserController {
         .body(new APIResponse<>("Successfully Fetched User Profile", response));
   }
 
+  @Operation(summary = "Update current user profile")
   @PatchMapping("/me")
   public ResponseEntity<APIResponse<UserResponse>> updateMyProfile(@Valid @RequestBody ProfileRequest request) {
     UserResponse updatedUser = userService.updateMyProfile(request);
@@ -58,6 +64,7 @@ public class UserController {
         .body(new APIResponse<>("Profile successfully updated", updatedUser));
   }
 
+  @Operation(summary = "Change current user password")
   @PostMapping("/me/change-password")
   public ResponseEntity<APIResponse<Void>> updateMyPassword(@Valid @RequestBody UpdatePasswordRequest request) {
     userService.updatePassword(request);
