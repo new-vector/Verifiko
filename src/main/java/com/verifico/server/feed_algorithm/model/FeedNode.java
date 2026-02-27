@@ -11,11 +11,17 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "feed_nodes", indexes = {
     @Index(name = "idx_feed_nodes_active_created", columnList = "active,created_at")
 })
+@Getter
+@Setter
+@NoArgsConstructor
 public class FeedNode {
 
     @Id
@@ -39,65 +45,6 @@ public class FeedNode {
 
     @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private Instant createdAt = Instant.now();
-
-    public FeedNode() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getVideoUrl() {
-        return videoUrl;
-    }
-
-    public void setVideoUrl(String videoUrl) {
-        this.videoUrl = videoUrl;
-    }
-
-    public String getTagsCsv() {
-        return tagsCsv;
-    }
-
-    public void setTagsCsv(String tagsCsv) {
-        this.tagsCsv = tagsCsv;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
 
     public List<String> getTags() {
         if (tagsCsv == null || tagsCsv.isBlank()) {
